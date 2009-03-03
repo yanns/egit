@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.spearce.egit.core.internal.storage;
 
+import java.io.File;
 import java.io.IOException;
 
 import org.eclipse.core.internal.resources.ResourceException;
@@ -68,7 +69,7 @@ class IndexFileRevision extends GitFileRevision implements IFileRevision {
 		return INDEX;
 	}
 
-	private ObjectId locateBlobObjectId() throws CoreException {
+	private Entry getEntry() throws CoreException {
 		try {
 			final GitIndex idx = db.getIndex();
 			final Entry e = idx.getEntry(path);
@@ -76,12 +77,21 @@ class IndexFileRevision extends GitFileRevision implements IFileRevision {
 				throw new ResourceException(IResourceStatus.FAILED_READ_LOCAL,
 						Path.fromPortableString(path),
 						"Git index entry not found", null);
-			return e.getObjectId();
+			return e;
 
 		} catch (IOException e) {
 			throw new ResourceException(IResourceStatus.FAILED_READ_LOCAL, Path
 					.fromPortableString(path),
 					"IO error looking up path in index.", e);
 		}
+	}
+
+	private ObjectId locateBlobObjectId() throws CoreException {
+		return getEntry().getObjectId();
+	}
+
+	@Override
+	public boolean isModified(File wd) throws CoreException {
+		return getEntry().isModified(db.getWorkDir());
 	}
 }

@@ -48,12 +48,17 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.team.core.history.IFileRevision;
+import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.SaveableCompareEditorInput;
 import org.spearce.egit.core.internal.storage.GitFileRevision;
 import org.spearce.egit.core.project.RepositoryMapping;
 import org.spearce.egit.ui.internal.EditableRevision;
 import org.spearce.egit.ui.internal.GitCompareFileRevisionEditorInput;
+import org.spearce.egit.ui.synchronize.GitCompareIndexSubscriber;
+import org.spearce.egit.ui.synchronize.GitSynchronizeParticipant;
 import org.spearce.jgit.lib.GitIndex;
 import org.spearce.jgit.lib.Repository;
 
@@ -67,16 +72,28 @@ public class CompareWithIndexAction extends RepositoryAction {
 
 	@Override
 	public void execute(IAction action) {
-		final IResource resource = getSelectedResources()[0];
-		final RepositoryMapping mapping = RepositoryMapping.getMapping(resource.getProject());
+		final IResource[] selectedResources = getSelectedResources();
+		final IResource resource = selectedResources[0];
+
+		if (selectedResources.length == 1 && resource instanceof IFile) {
+			compareOneFile((IFile)resource);
+		} else {
+			// if more than one file is selected, use the synchronize perspective
+			Subscriber subscriber = new GitCompareIndexSubscriber(selectedResources);
+			GitSynchronizeParticipant participant = new GitSynchronizeParticipant(subscriber);
+			TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
+			participant.refresh(selectedResources, null, null, null);
+		}
+	}
+
+	private void compareOneFile(final IFile file) {
+		final RepositoryMapping mapping = RepositoryMapping.getMapping(file.getProject());
 		final Repository repository = mapping.getRepository();
-		final String gitPath = mapping.getRepoRelativePath(resource);
+		final String gitPath = mapping.getRepoRelativePath(file);
 
 		final IFileRevision nextFile = GitFileRevision.inIndex(repository, gitPath);
 
-		final IFile baseFile = (IFile) resource;
-		final ITypedElement base = SaveableCompareEditorInput.createFileElement(baseFile);
-
+		final ITypedElement base = SaveableCompareEditorInput.createFileElement(file);
 		final EditableRevision next = new EditableRevision(nextFile);
 
 		IContentChangeListener listener = new IContentChangeListener() {
@@ -84,8 +101,8 @@ public class CompareWithIndexAction extends RepositoryAction {
 				final byte[] newContent = next.getModifiedContent();
 				try {
 					final GitIndex index = repository.getIndex();
-					final File file = new File(baseFile.getLocation().toString());
-					index.add(mapping.getWorkDir(), file, newContent);
+					final File baseFile = new File(file.getLocation().toString());
+					index.add(mapping.getWorkDir(), baseFile, newContent);
 					index.write();
 				} catch (IOException e) {
 					Utils.handleError(getTargetPart().getSite().getShell(), e,
@@ -106,15 +123,16 @@ public class CompareWithIndexAction extends RepositoryAction {
 	@Override
 	public boolean isEnabled() {
 		final IResource[] selectedResources = getSelectedResources();
-		if (selectedResources.length != 1)
+		if (selectedResources.length == 0)
 			return false;
 
-		final IResource resource = selectedResources[0];
-		if (!(resource instanceof IFile)) {
-			return false;
+		for (IResource resource : selectedResources) {
+			final RepositoryMapping mapping = RepositoryMapping.getMapping(resource.getProject());
+			if (mapping == null)
+				return false;
 		}
-		final RepositoryMapping mapping = RepositoryMapping.getMapping(resource.getProject());
-		return mapping != null;
+
+		return true;
 	}
 
 }

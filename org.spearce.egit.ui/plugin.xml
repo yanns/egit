@@ -388,4 +388,14 @@
 		</action>
       </actionSet>
    </extension>
+   <extension
+         point="org.eclipse.team.ui.synchronizeParticipants">
+      <participant
+            class="org.spearce.egit.ui.synchronize.GitSynchronizeParticipant"
+            icon="icons/synchronization.gif"
+            id="GitSynchronizeParticipant"
+            name="Git Index"
+            persistent="false">
+      </participant>
+   </extension>
 </plugin>

@@ -9,6 +9,8 @@
  *******************************************************************************/
 package org.spearce.egit.core.internal.storage;
 
+import java.io.File;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
@@ -51,5 +53,10 @@ class WorkspaceFileRevision extends GitFileRevision implements IFileRevision {
 
 	public String getContentIdentifier() {
 		return WORKSPACE;
+	}
+
+	@Override
+	public boolean isModified(File wd) throws CoreException {
+		return false;
 	}
 }

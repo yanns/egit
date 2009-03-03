@@ -8,6 +8,7 @@
  *******************************************************************************/
 package org.spearce.egit.core.internal.storage;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -106,7 +107,7 @@ class CommitFileRevision extends GitFileRevision {
 
 	/**
 	 * Get the commit that introduced this file revision.
-	 * 
+	 *
 	 * @return the commit we most recently noticed this file in.
 	 */
 	public RevCommit getRevCommit() {
@@ -126,5 +127,11 @@ class CommitFileRevision extends GitFileRevision {
 					.fromPortableString(path), "IO error looking up path in "
 					+ commit.getId() + ".", e);
 		}
+	}
+
+	@Override
+	public boolean isModified(File wd) throws CoreException {
+		// TODO: implement
+		return false;
 	}
 }

@@ -8,6 +8,7 @@
  *******************************************************************************/
 package org.spearce.egit.core.internal.storage;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -32,7 +33,7 @@ public abstract class GitFileRevision extends FileRevision {
 
 	/**
 	 * Obtain a file revision for a specific blob of an existing commit.
-	 * 
+	 *
 	 * @param db
 	 *            the repository this commit was loaded out of, and that this
 	 *            file's blob should also be reachable through.
@@ -87,4 +88,16 @@ public abstract class GitFileRevision extends FileRevision {
 			return null;
 		}
 	}
+
+	/**
+	 * Returns <code>true</code> if the local resource
+	 * matches the remote resource based on this criteria and <code>false</code>
+	 * otherwise. Comparing should be fast and based on cached information.
+	 *
+	 * @param wd the local resource to be compared
+	 * @return <code>true</code> if local and remote are equal based on this criteria and <code>false</code>
+	 * otherwise.
+	 * @throws CoreException
+	 */
+	public abstract boolean isModified(File wd) throws CoreException;
 }
