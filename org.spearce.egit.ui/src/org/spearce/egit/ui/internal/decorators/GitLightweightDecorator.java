@@ -44,6 +44,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.ui.ISharedImages;
 import org.eclipse.team.ui.TeamImages;
 import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.ui.IContributorResourceAdapter;
 import org.eclipse.ui.PlatformUI;
 import org.spearce.egit.core.GitException;
@@ -55,6 +56,7 @@ import org.spearce.egit.ui.Activator;
 import org.spearce.egit.ui.UIIcons;
 import org.spearce.egit.ui.UIPreferences;
 import org.spearce.egit.ui.UIText;
+import org.spearce.egit.ui.internal.GitDecoration;
 import org.spearce.egit.ui.internal.decorators.IDecoratableResource.Staged;
 import org.spearce.jgit.lib.IndexChangedEvent;
 import org.spearce.jgit.lib.RefsChangedEvent;
@@ -97,6 +99,8 @@ public class GitLightweightDecorator extends LabelProvider implements
 			UIText.Decorator_exceptionMessage, Activator.getPluginId(),
 			IStatus.ERROR, Activator.getDefault().getLog());
 
+	private static GitLightweightDecorator instance;
+
 	/**
 	 * Constructs a new Git resource decorator
 	 */
@@ -109,6 +113,7 @@ public class GitLightweightDecorator extends LabelProvider implements
 		GitProjectData.addRepositoryChangeListener(this);
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(this,
 				IResourceChangeEvent.POST_CHANGE);
+		instance = this;
 	}
 
 	/*
@@ -126,6 +131,7 @@ public class GitLightweightDecorator extends LabelProvider implements
 		Repository.removeAnyRepositoryChangedListener(this);
 		GitProjectData.removeRepositoryChangeListener(this);
 		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
+		instance = null;
 	}
 
 	/**
@@ -174,6 +180,16 @@ public class GitLightweightDecorator extends LabelProvider implements
 		} catch (IOException e) {
 			handleException(resource, GitException.wrapException(e));
 		}
+	}
+
+	/**
+	 * @param element
+	 * @return the decoration
+	 */
+	public static GitDecoration getDecoration(Object element) {
+		GitDecoration decoration = new GitDecoration();
+		instance.decorate(element, decoration);
+		return decoration;
 	}
 
 	/**
@@ -609,6 +625,9 @@ public class GitLightweightDecorator extends LabelProvider implements
 		IResource resource = null;
 		if (element instanceof IResource) {
 			resource = (IResource) element;
+		} else if (element instanceof ISynchronizeModelElement) {
+			final ISynchronizeModelElement synchroModelElement = (ISynchronizeModelElement)element;
+			resource = synchroModelElement.getResource();
 		} else if (element instanceof IAdaptable) {
 			final IAdaptable adaptable = (IAdaptable) element;
 			resource = (IResource) adaptable.getAdapter(IResource.class);

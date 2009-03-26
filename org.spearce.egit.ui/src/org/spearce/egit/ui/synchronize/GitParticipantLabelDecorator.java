@@ -37,48 +37,41 @@
 
 package org.spearce.egit.ui.synchronize;
 
+import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.resource.LocalResourceManager;
+import org.eclipse.jface.resource.ResourceManager;
 import org.eclipse.jface.viewers.ILabelDecorator;
-import org.eclipse.team.core.subscribers.Subscriber;
-import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.SubscriberParticipant;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.swt.graphics.Image;
+import org.spearce.egit.ui.internal.GitDecoration;
+import org.spearce.egit.ui.internal.decorators.GitLightweightDecorator;
 
 /**
- * The synchronize participant for GIT.
+ * @author simon
+ *
  */
-public class GitSynchronizeParticipant extends SubscriberParticipant {
+public class GitParticipantLabelDecorator extends LabelProvider implements
+		ILabelDecorator {
+
+	private final ResourceManager fImageCache;
 
 	/**
-	 * @param subscriber
-	 *            the {@link Subscriber} used for the synchronization.
+	 * constructor
 	 */
-	public GitSynchronizeParticipant(Subscriber subscriber) {
-		setSubscriber(subscriber);
+	public GitParticipantLabelDecorator() {
+		super();
+		fImageCache = new LocalResourceManager(JFaceResources.getResources());
 	}
 
-	@Override
-	public String getId() {
-		return "GitSynchronizeParticipant"; //$NON-NLS-1$
+	public Image decorateImage(final Image image, final Object element) {
+		final GitDecoration decoration = GitLightweightDecorator
+				.getDecoration(element);
+		return decoration.decorateImage(image, fImageCache);
 	}
 
-	@Override
-	public String getSecondaryId() {
-		// TODO: do we need several different instances?
-		return "1"; //$NON-NLS-1$
+	public String decorateText(final String input, final Object element) {
+		final GitDecoration decoration = GitLightweightDecorator
+				.getDecoration(element);
+		return decoration.decorateText(input);
 	}
-
-	@Override
-	protected void initializeConfiguration(
-			ISynchronizePageConfiguration configuration) {
-		super.initializeConfiguration(configuration);
-		// The decorator adds itself to the configuration
-		ILabelDecorator labelDecorator = new GitParticipantLabelDecorator();
-		configuration.addLabelDecorator(labelDecorator);
-	}
-
-	@Override
-	public String getName() {
-		// TODO: i18n
-		return "Synchronize with GIT's index";
-	}
-
 }
